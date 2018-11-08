@@ -20,7 +20,7 @@ client_secret2 = 'hTI4KMkFumtvOXvM6HDOTsr_MYM'
 #[bot4]
 username3 = 'djw0003'
 password3 = 'Abcd354112'
-client_id3 = '6FP8876h655ZkQ
+client_id3 = '6FP8876h655ZkQ'
 client_secret3 = 'Fs681Uqqvvhd2cyKCLDqwJeem44'
 
 #[bot5]
@@ -121,20 +121,19 @@ def top_level_comment_gatherer(subreddit, threshhold, filename, bot):
             break
 
     comment_dataframe.to_csv(filename, index = False)
-
-    def comment_screener(dataset):
-         for i in dataset.index:
-             print(dataset.iloc[i, 'comment body'])
-             keep = raw_input('keep? 1 - yes 0 - no')
-             if keep == 1:
-                 pass
-             else:
-                 dataset = dataset.drop(i)
-            if np.mod(i, 10) == 0:
-                quit = raw_input('quit? 1 - yes 0 - no')
-                if quit == 1:
-                    break
-                else:
-                    continue
-        dataset.index = range(len(dataset))
-        return dataset 
+def comment_screener(dataset):
+    for i in dataset.index:
+        print(dataset.iloc[i, 'comment body'])             
+        keep = raw_input('keep? 1 - yes 0 - no')
+        if keep == 1:
+            pass
+        else:
+            dataset = dataset.drop(i)
+        if np.mod(i, 10) == 0:
+            quit = raw_input('quit? 1 - yes 0 - no')
+            if quit == 1:
+                break
+            else:
+                continue
+    dataset.index = range(len(dataset))
+    return dataset

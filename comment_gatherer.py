@@ -2,7 +2,7 @@ import praw
 import os
 import csv
 import pandas as pd
-import numpy as np 
+import numpy as np
 
 
 #[bot1]
@@ -123,18 +123,19 @@ def top_level_comment_gatherer(subreddit, threshhold, filename, bot):
     comment_dataframe.to_csv(filename, index = False)
 
 def comment_screener(dataset):
+    new_dataset = pd.DataFrame(columns = ['comment body', 'comment author', 'comment id', 'subreddit'])
     for i in dataset.index:
         print(dataset.loc[i, 'comment body'])
         keep = input('keep? 1 - yes 0 - no')
         if keep == '1':
-            pass
+            new_dataset.loc[i] = dataset.loc[i]
         else:
-            dataset = dataset.drop(i)
+            pass
         if np.mod(i, 10) == 0:
             quit = input('quit? 1 - yes 0 - no')
             if quit == '1':
                 break
-            
-                
+
+
     dataset.index = range(len(dataset))
-    return dataset
+    return new_dataset

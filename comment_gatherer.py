@@ -137,5 +137,5 @@ def comment_screener(dataset):
                 break
 
 
-    dataset.index = range(len(dataset))
+    new_dataset.index = range(len(new_dataset))
     return new_dataset

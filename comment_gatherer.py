@@ -64,7 +64,7 @@ def top_level_comment_gatherer(subreddit, threshhold, filename, bot):
                             username=username)
     elif bot == 2:
         reddit = praw.Reddit(client_id=client_id2, client_secret=client_secret2,
-                            password=password2, user_agent='praw_comment_scraper:<v 1.0>(by djw009)'
+                            password=password2, user_agent='praw_comment_scraper:<v 1.0>(by djw009)',
                             username=username2)
 
     elif bot == 3:
@@ -123,7 +123,7 @@ def top_level_comment_gatherer(subreddit, threshhold, filename, bot):
     comment_dataframe.to_csv(filename, index = False)
 def comment_screener(dataset):
     for i in dataset.index:
-        print(dataset.iloc[i, 'comment body'])             
+        print(dataset.iloc[i, 'comment body'])
         keep = raw_input('keep? 1 - yes 0 - no')
         if keep == 1:
             pass

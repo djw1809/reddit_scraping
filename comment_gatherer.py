@@ -124,11 +124,13 @@ def top_level_comment_gatherer(subreddit, threshhold, filename, bot):
 
 def comment_screener(dataset):
     new_dataset = pd.DataFrame(columns = ['comment body', 'comment author', 'comment id', 'subreddit'])
+    keep_count = 0
     for i in dataset.index:
-        print(dataset.loc[i, 'comment body'])
+        print(dataset.loc[i, 'comment body']+'\nkeep count is %d\n' %(keep_count))
         keep = input('keep? 1 - yes 0 - no')
         if keep == '1':
             new_dataset.loc[i] = dataset.loc[i]
+            keep_count += 1
         else:
             pass
         if np.mod(i, 10) == 0:

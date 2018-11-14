@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 import re
+import spacy
+from sklearn.preprocessing import OneHotEncoder
+from torch.utils.data import Dataset, DataLoader
 #TODO: Add a preprocessing funcion that formats the strings in the dataframe before we reformat it below
 # ''.join(s for s in string if ord(s)>31 and ord(s)<126)
 #    string = string.lower()
@@ -33,7 +36,7 @@ def scrape_output_to_model_sets(dataset1, dataset2, labeled = True):
         dataset2 (pandas dataframe) - output of reddit scrape - should represent all same label '''
     dataset1.index = range(len(dataset1))
     dataset2.index = range(len(dataset2))
-    
+
     if labeled:
         output_dataframe1 = pd.DataFrame(np.zeros((len(dataset1.index), 2)), columns = ['label', 'comment'])
         output_dataframe2 = pd.DataFrame(np.zeros((len(dataset2.index), 2)), columns = ['label', 'comment'])
@@ -58,6 +61,64 @@ def scrape_output_to_model_sets(dataset1, dataset2, labeled = True):
 
 
     return final_output
+
+def encode_corpus_one_hot_stupid(dataset):
+    corpus = ''
+
+    for i in len(dataset.index):
+        corpus += dataset.loc[i, 'comment']
+
+    nlp = spacy.load('en')
+    tokenized_corpus = nlp.tokenizer(corpus)
+    list_of_tokens = [tok.text for tok in tokenized_corpus]
+    list_of_tokens = list(set(list_of_tokens))
+
+    vector_dict = {}
+    vectors = np.zeros(len(list_of_tokens))
+
+    for i in range(len(list_of_tokens)):
+        vectors[i,i] = 1
+        vector_dict[list_of_tokens[i]] = vectors[i, :]
+
+    return vectors, list_of_vectors
+
+def encode_corpus_one_hot_smart(dataset, corpus = False):
+
+    if corpus == False:
+        corpus = ''
+
+        for i in range(len(dataset.index)):
+            corpus += dataset.loc[i, 'comment']
+    else:
+        corpus = dataset
+
+    nlp = spacy.load('en')
+    tokenized_corpus = nlp.tokenizer(corpus)
+    list_of_tokens = [tok.text for tok in tokenized_corpus]
+    list_of_tokens = list(set(list_of_tokens))
+
+    X = np.asarray(list_of_tokens).reshape(-1,1)
+    encoder = OneHotEncoder()
+
+    encoder.fit(X)
+
+    return encoder
+
+class corpus_to_one_hot(Dataset):
+
+    def __init__(self, data):
+        self.encoding = encode_corpus_one_hot_smart
+
+    def __getitem__(self, token):
+        dummy1 = []
+        dummy2 = []
+        dummy2.append(token)
+        dummy1.append(dummy2)
+        return torch.Tensor(self.enoding.transform(dummy1).toarray())
+
+    def inverse_lookup(self, vector):
+        vector = np.asarray(vector)
+        return self.encoding.inverse_transform(vector)
 
 
 

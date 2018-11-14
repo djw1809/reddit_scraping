@@ -4,6 +4,7 @@ import re
 import spacy
 from sklearn.preprocessing import OneHotEncoder
 from torch.utils.data import Dataset, DataLoader
+import torch
 #TODO: Add a preprocessing funcion that formats the strings in the dataframe before we reformat it below
 # ''.join(s for s in string if ord(s)>31 and ord(s)<126)
 #    string = string.lower()
@@ -41,8 +42,8 @@ def scrape_output_to_model_sets(dataset1, dataset2, labeled = True):
         output_dataframe1 = pd.DataFrame(np.zeros((len(dataset1.index), 2)), columns = ['label', 'comment'])
         output_dataframe2 = pd.DataFrame(np.zeros((len(dataset2.index), 2)), columns = ['label', 'comment'])
 
-        output_dataframe1['label'] = '__label__1'
-        output_dataframe2['label'] = '__label__2'
+        output_dataframe1['label'] = 1
+        output_dataframe2['label'] = -1
 
         output_dataframe1['comment'] = dataset1['comment body']
         output_dataframe2['comment'] = dataset2['comment body']
@@ -104,21 +105,78 @@ def encode_corpus_one_hot_smart(dataset, corpus = False):
 
     return encoder
 
+
+def create_comment_vector(comment, one_hot_encoding, nlp):
+
+    tokenized_comment_object = nlp.tokenizer(comment)
+    tokenized_comment = [tok.text for tok in tokenized_comment_object]
+
+    vector = np.zeros((1, one_hot_encoding.dimension()))
+
+    for i in range(len(tokenized_comment)):
+        word_vector = one_hot_encoding[tokenized_comment[i]]
+        vector += word_vector
+
+    vector = vector / len(tokenized_comment)
+
+    return vector
+
+
 class corpus_to_one_hot(Dataset):
 
     def __init__(self, data):
-        self.encoding = encode_corpus_one_hot_smart
+        self.encoding = encode_corpus_one_hot_smart(data, corpus = False)
+        self.data = data
+        self.nlp = spacy.load('en')
+
+    def dimension(self):
+        return self.encoding.transform([['.']]).toarray().shape[1]
 
     def __getitem__(self, token):
         dummy1 = []
         dummy2 = []
         dummy2.append(token)
         dummy1.append(dummy2)
-        return torch.Tensor(self.enoding.transform(dummy1).toarray())
+        return torch.Tensor(self.encoding.transform(dummy1).toarray())
 
     def inverse_lookup(self, vector):
         vector = np.asarray(vector)
         return self.encoding.inverse_transform(vector)
+
+class comment_dataset(Dataset):
+
+    def __init__(self, data):
+        self.encoding = corpus_to_one_hot(data)
+        self.data = data
+        self.nlp = spacy.load('en')
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        comment = self.data.loc[index, 'comment']
+        label = self.data.loc[index, 'label'].astype('int')
+        vector = torch.tensor(create_comment_vector(comment, self.encoding, self.nlp)[0])
+        return vector, label, comment 
+
+    def inverse_lookup(self, comment_vector):
+        comment_vector = np.asarray(comment_vector)
+        non_zero_indicies = np.nonzero(comment_vector)
+        non_zero_indicies = non_zero_indicies[0]
+        words = []
+        for i in range(len(non_zero_indicies)):
+            vector = np.zeros((1, self.encoding.dimension()))
+            vector[0,non_zero_indicies[i]] = 1
+            word = self.encoding.inverse_lookup(vector)
+            words.append(word[0][0])
+        return words
+
+
+
+        return vector, label
+
+
+
 
 
 

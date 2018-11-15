@@ -57,7 +57,7 @@ def scrape_output_to_model_sets(dataset1, dataset2, labeled = True):
         output_dataframe2['comment'] = dataset2['comment body']
 
         final_output = output_dataframe1.append(output_dataframe2)
-
+        final_output.index = range(len(final_output))
 
 
 
@@ -157,7 +157,7 @@ class comment_dataset(Dataset):
         comment = self.data.loc[index, 'comment']
         label = self.data.loc[index, 'label'].astype('int')
         vector = torch.tensor(create_comment_vector(comment, self.encoding, self.nlp)[0])
-        return vector, label, comment 
+        return vector, label, comment
 
     def inverse_lookup(self, comment_vector):
         comment_vector = np.asarray(comment_vector)

@@ -67,7 +67,7 @@ def encode_corpus_one_hot_stupid(dataset):
     corpus = ''
 
     for i in len(dataset.index):
-        corpus += dataset.loc[i, 'comment']
+        corpus += ' ' + dataset.loc[i, 'comment']
 
     nlp = spacy.load('en')
     tokenized_corpus = nlp.tokenizer(corpus)
@@ -89,7 +89,7 @@ def encode_corpus_one_hot_smart(dataset, corpus = False):
         corpus = ''
 
         for i in range(len(dataset.index)):
-            corpus += dataset.loc[i, 'comment']
+            corpus += ' '+ dataset.loc[i, 'comment']
     else:
         corpus = dataset
 
@@ -157,7 +157,7 @@ class comment_dataset(Dataset):
         comment = self.data.loc[index, 'comment']
         label = self.data.loc[index, 'label'].astype('int')
         vector = torch.tensor(create_comment_vector(comment, self.encoding, self.nlp)[0])
-        return vector, label, comment
+        return vector, label#, comment
 
     def inverse_lookup(self, comment_vector):
         comment_vector = np.asarray(comment_vector)

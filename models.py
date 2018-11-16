@@ -11,6 +11,7 @@ import preprocessing_fasttext as pre
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import torch.optim as optim
+import torch.nn.functional as F
 
 def plot_confusion_matrix(cmat, classes, normalize = False):
 
@@ -83,14 +84,15 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
         running_val_corrects = 0
 
         for inputs, labels, comment in training_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-
+            #inputs = inputs.to(device)
+            #labels = labels.to(device)
+            inputs = inputs.float()
+            #labels = labels.float()
             optimizer.zero_grad()
 
             #forward
             outputs = model(inputs)
-            loss_value = loss(outpus, labels)
+            loss_value = loss(outputs, labels)
             _, preds = torch.max(outputs.data, 1)
 
             #backwards

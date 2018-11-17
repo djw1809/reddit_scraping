@@ -35,7 +35,7 @@ class linear_model(nn.Module):
 
     def forward(self, x):
         h = self.fc(x)
-        return x
+        return h 
 
 ####################### loss functions ##############################
 
@@ -83,11 +83,11 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
         running_corrects = 0
         running_val_corrects = 0
 
-        for inputs, labels, comment in training_loader:
+        for inputs, labels  in training_loader:
             #inputs = inputs.to(device)
             #labels = labels.to(device)
             inputs = inputs.float()
-            #labels = labels.float()
+            labels = labels.long()
             optimizer.zero_grad()
 
             #forward
@@ -96,7 +96,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
             _, preds = torch.max(outputs.data, 1)
 
             #backwards
-            loss_value.baclward()
+            loss_value.backward()
             optimizer.step()
 
             running_loss += loss_value.item()
@@ -107,9 +107,11 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
 
         model.eval()
 
-        for inputs, labels, comment in test_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
+        for inputs, labels  in test_loader:
+            #inputs = inputs.to(device)
+            #labels = labels.to(device)
+            inputs = inputs.float()
+            labels = labels.long()
             outputs = model(inputs)
             _, preds = torch.max(outputs.data, 1)
             running_val_corrects += torch.sum(preds == labels.data).item()

@@ -35,7 +35,7 @@ class linear_model(nn.Module):
 
     def forward(self, x):
         h = self.fc(x)
-        return h 
+        return h
 
 ####################### loss functions ##############################
 
@@ -53,8 +53,12 @@ class CrossEntropyLoss_weight(nn.Module): #Defines cross entropy loss with weigh
 
 def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot, filename):
 
-    training_dataset = pre.comment_dataset(train_data)
-    test_dataset = pre.comment_dataset(test_data)
+    corpus = train.append(test)
+    corpus.index = range(len(corpus))
+    encoding = pre.corpus_to_one_hot(corpus)
+
+    training_dataset = pre.comment_dataset_with_encoding(train_data, encoding)
+    test_dataset = pre.comment_dataset(test_data, encoding)
 
 
     model = linear_model(training_dataset.encoding.dimension(), 2)

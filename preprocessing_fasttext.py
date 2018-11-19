@@ -176,6 +176,38 @@ class comment_dataset(Dataset):
         return vector, label
 
 
+class comment_dataset_with_encoding(Dataset):
+
+    def __init__(self, data, encoding):
+        self.encoding = encoding
+        self.data = data
+        self.nlp = spacy.load('en')
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        comment = self.data.loc[index, 'comment']
+        label = self.data.loc[index, 'label'].astype('int')
+        vector = torch.tensor(create_comment_vector(comment, self.encoding, self.nlp)[0])
+        return vector, label#, comment
+
+    def inverse_lookup(self, comment_vector):
+        comment_vector = np.asarray(comment_vector)
+        non_zero_indicies = np.nonzero(comment_vector)
+        non_zero_indicies = non_zero_indicies[0]
+        words = []
+        for i in range(len(non_zero_indicies)):
+            vector = np.zeros((1, self.encoding.dimension()))
+            vector[0,non_zero_indicies[i]] = 1
+            word = self.encoding.inverse_lookup(vector)
+            words.append(word[0][0])
+        return words
+
+
+
+        return vector, label
+
 
 
 

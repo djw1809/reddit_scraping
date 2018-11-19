@@ -12,6 +12,8 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import torch.optim as optim
 import torch.nn.functional as F
+import sklearn
+from sklearn.metrics import confusion_matrix
 
 def plot_confusion_matrix(cmat, classes, normalize = False):
 
@@ -53,15 +55,15 @@ class CrossEntropyLoss_weight(nn.Module): #Defines cross entropy loss with weigh
 
 def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot, filename):
 
-    corpus = train.append(test)
+    corpus = train_data.append(test_data)
     corpus.index = range(len(corpus))
     encoding = pre.corpus_to_one_hot(corpus)
 
     training_dataset = pre.comment_dataset_with_encoding(train_data, encoding)
-    test_dataset = pre.comment_dataset(test_data, encoding)
+    test_dataset = pre.comment_dataset_with_encoding(test_data, encoding)
 
 
-    model = linear_model(training_dataset.encoding.dimension(), 2)
+    model = linear_model(encoding.dimension(), 2)
 
     optimizer = optim.Adam(model.parameters(), lr = 1e-2)
 
@@ -76,6 +78,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
         loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
         accuracy_data = np.zeros((epochs))
         val_accuracy_data = np.zeros((epochs))
+        confusion_matrix_ = np.zeros((2,2))
     else:
         pass
 
@@ -119,7 +122,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
             outputs = model(inputs)
             _, preds = torch.max(outputs.data, 1)
             running_val_corrects += torch.sum(preds == labels.data).item()
-            confusion_matrix += sklearn.metrics.confusion_matrix(labels, preds, labels = range(2))
+            confusion_matrix_ += confusion_matrix(labels, preds, labels = range(2))
 
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 
@@ -139,7 +142,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
 
         plt.savefig(filename + '.png')
         plt.clf()
-        plot_confusion_matrix(confusion_matrix, ['label1', 'label2'], normalize = False)
+        plot_confusion_matrix(confusion_matrix_, ['label1', 'label2'], normalize = False)
         plt.savefig(filename+'_confusion_matrix.png')
 
     torch.save(model.state_dict(), filename + 'model')

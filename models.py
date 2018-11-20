@@ -27,7 +27,13 @@ def plot_confusion_matrix(cmat, classes, normalize = False):
     plt.yticks(tick_marks, classes)
     fmt = '.2f'
     thresh = cmat.max()/2.
-
+    
+    for i, j in itertools.product(range(cmat.shape[0]), range(cmat.shape[1])):
+        plt.text(j, i, format(cmat[i, j], fmt), horizontalalignment = "center", color = "white" if cmat[i,j]> thresh else "black")
+        plt.tight_layout()
+        plt.ylabel('True Label')
+        plt.title('Predicted label')
+        
 #######################  models #################################
 class linear_model(nn.Module):
 
@@ -122,7 +128,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
             outputs = model(inputs)
             _, preds = torch.max(outputs.data, 1)
             running_val_corrects += torch.sum(preds == labels.data).item()
-            confusion_matrix_ += confusion_matrix(labels, preds, labels = range(2))
+           # confusion_matrix_ += confusion_matrix(labels, preds, labels = None)
 
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 

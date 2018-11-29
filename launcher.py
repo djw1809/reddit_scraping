@@ -17,5 +17,5 @@ for i in range(len(test)):
         test.loc[i, 'label'] = 0 
     else:
         pass 
-model.train_binary_text_classifier(train, test, 20, 2, True, 'test')
+model.train_binary_text_classifier(train, test, 1, 2, True,'results', 'test' 'test')
 

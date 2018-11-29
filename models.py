@@ -14,6 +14,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import sklearn
 from sklearn.metrics import confusion_matrix
+from pathlib import Path
 
 def plot_confusion_matrix(cmat, classes, normalize = False):
 
@@ -27,13 +28,13 @@ def plot_confusion_matrix(cmat, classes, normalize = False):
     plt.yticks(tick_marks, classes)
     fmt = '.2f'
     thresh = cmat.max()/2.
-    
+
     for i, j in itertools.product(range(cmat.shape[0]), range(cmat.shape[1])):
         plt.text(j, i, format(cmat[i, j], fmt), horizontalalignment = "center", color = "white" if cmat[i,j]> thresh else "black")
         plt.tight_layout()
         plt.ylabel('True Label')
         plt.title('Predicted label')
-        
+
 #######################  models #################################
 class linear_model(nn.Module):
 
@@ -59,7 +60,7 @@ class CrossEntropyLoss_weight(nn.Module): #Defines cross entropy loss with weigh
 
 #######################training_calls##################################
 
-def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot, filename):
+def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot, main_folder, folder, filename):
 
     corpus = train_data.append(test_data)
     corpus.index = range(len(corpus))
@@ -67,6 +68,10 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
 
     training_dataset = pre.comment_dataset_with_encoding(train_data, encoding)
     test_dataset = pre.comment_dataset_with_encoding(test_data, encoding)
+
+    main_folder_path = Path(main_folder)
+    training_run_folder_path = Path(folder)
+    final_path = Path(main_folder_path/training_run_folder_path/filename)
 
 
     model = linear_model(encoding.dimension(), 2)
@@ -146,12 +151,12 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
         plt.plot(range(epochs), accuracy_data, 'ro')
         plt.plot(range(epochs), val_accuracy_data, 'go')
 
-        plt.savefig(filename + '.png')
+        plt.savefig(main_folder_path/training_run_folder_path/'plots.png')
         plt.clf()
-        plot_confusion_matrix(confusion_matrix_, ['label1', 'label2'], normalize = False)
-        plt.savefig(filename+'_confusion_matrix.png')
+        #plot_confusion_matrix(confusion_matrix_, ['label1', 'label2'], normalize = False)
+        #plt.savefig(filename+'_confusion_matrix.png')
 
-    torch.save(model.state_dict(), filename + 'model')
-    np.savetxt(filename+'loss_data', loss_data, delimiter = ',')
-    np.savetxt(filename + 'accuracy_data', accuracy_data, delimiter =',')
-    np.savetxt(filename + 'val_accuracy_data', val_accuracy_data, delimiter = ',')
+    torch.save(model.state_dict(), main_folder_path/training_run_folder_path/'model')
+    np.savetxt(main_folder_path/training_run_folder_path/'loss_data', loss_data, delimiter = ',')
+    np.savetxt(main_folder_path/training_run_folder_path/'accuracy_data', accuracy_data, delimiter =',')
+    np.savetxt(main_folder_path/training_run_folder_path/'val_accuracy_data', val_accuracy_data, delimiter = ',')

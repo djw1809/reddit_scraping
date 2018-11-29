@@ -151,7 +151,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
         plt.plot(range(epochs), accuracy_data, 'ro')
         plt.plot(range(epochs), val_accuracy_data, 'go')
 
-        plt.savefig(main_folder_path/training_run_folder_path/'plots.png')
+        plt.savefig(main_folder+ '/' +folder+'/'+'plots.png')
         plt.clf()
         #plot_confusion_matrix(confusion_matrix_, ['label1', 'label2'], normalize = False)
         #plt.savefig(filename+'_confusion_matrix.png')

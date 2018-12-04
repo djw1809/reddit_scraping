@@ -5,10 +5,15 @@ import spacy
 from sklearn.preprocessing import OneHotEncoder
 from torch.utils.data import Dataset, DataLoader
 import torch
+import fastText.FastText as fast
 #TODO: Add a preprocessing funcion that formats the strings in the dataframe before we reformat it below
 # ''.join(s for s in string if ord(s)>31 and ord(s)<126)
 #    string = string.lower()
 # string = re.sub(r"([.!?,'/()])", r" \1 ", string)
+
+
+
+###########DATA CLEANING/PREPROCESSING ##########################
 
 def clean_comments(dataset):
     '''dataset(pandas dataframe) - data to clean'''
@@ -43,7 +48,7 @@ def scrape_output_to_model_sets(dataset1, dataset2, labeled = True):
         output_dataframe2 = pd.DataFrame(np.zeros((len(dataset2.index), 2)), columns = ['label', 'comment'])
 
         output_dataframe1['label'] = 1
-        output_dataframe2['label'] = -1
+        output_dataframe2['label'] = 0
 
         output_dataframe1['comment'] = dataset1['comment body']
         output_dataframe2['comment'] = dataset2['comment body']
@@ -62,6 +67,8 @@ def scrape_output_to_model_sets(dataset1, dataset2, labeled = True):
 
 
     return final_output
+
+#################ONE-HOT ENCODING######################
 
 def encode_corpus_one_hot_stupid(dataset):
     corpus = ''
@@ -84,6 +91,7 @@ def encode_corpus_one_hot_stupid(dataset):
     return vectors, list_of_vectors
 
 def encode_corpus_one_hot_smart(dataset, corpus = False):
+    '''returns an sklearn one-hot encoding of a corpus - basically a rougher version of corpus_To_one_hot'''
 
     if corpus == False:
         corpus = ''
@@ -107,7 +115,7 @@ def encode_corpus_one_hot_smart(dataset, corpus = False):
 
 
 def create_comment_vector(comment, one_hot_encoding, nlp):
-
+    '''creates a comment vector via a bag of words average of word vectors in one_hot_encoding'''
     tokenized_comment_object = nlp.tokenizer(comment)
     tokenized_comment = [tok.text for tok in tokenized_comment_object]
 
@@ -123,7 +131,7 @@ def create_comment_vector(comment, one_hot_encoding, nlp):
 
 
 class corpus_to_one_hot(Dataset):
-
+    '''computes word vectors for each word in data via a one-hot encoding'''
     def __init__(self, data):
         self.encoding = encode_corpus_one_hot_smart(data, corpus = False)
         self.data = data
@@ -144,6 +152,8 @@ class corpus_to_one_hot(Dataset):
         return self.encoding.inverse_transform(vector)
 
 class comment_dataset(Dataset):
+    '''returns an iterable Dataset that contains the comment vectors computed via a bag of words average of
+        onehot encoding of all the words in data'''
 
     def __init__(self, data):
         self.encoding = corpus_to_one_hot(data)
@@ -177,6 +187,10 @@ class comment_dataset(Dataset):
 
 
 class comment_dataset_with_encoding(Dataset):
+    '''need this to create test/train datasets from an encoding that has been made from the union of the test and train comment_dataset
+        otherwise test/train vectors will have different sizes. workflow follows:
+        1. encode word vectors with encoding = corpus_to_one_hot(train comments + test comments)
+        2. make train/test datasets with: train = comment_dataset_with_encoding(train, encoding) ; test = //(test, encoding) '''
 
     def __init__(self, data, encoding):
         self.encoding = encoding
@@ -190,7 +204,7 @@ class comment_dataset_with_encoding(Dataset):
         comment = self.data.loc[index, 'comment']
         label = self.data.loc[index, 'label'].astype('int')
         vector = torch.tensor(create_comment_vector(comment, self.encoding, self.nlp)[0])
-        return vector, label#, comment
+        return vector, label, comment
 
     def inverse_lookup(self, comment_vector):
         comment_vector = np.asarray(comment_vector)
@@ -208,7 +222,22 @@ class comment_dataset_with_encoding(Dataset):
 
         return vector, label
 
+###### fasttext skipgram embedding ##########
 
+class fasttext_word_embedding(Dataset):
+
+    def __init__(self, path_to_fasttext_model, data):
+        self.model = fast.load_model(path_to_fasttext_model)
+        self.data = data
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        comment = self.data.iloc[index, 1]
+        label = self.data.iloc[index, 0]
+        vector = self.model.get_word_vector(comment)
+        return vector, label, comment 
 
 
 

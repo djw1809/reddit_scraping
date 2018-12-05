@@ -236,8 +236,8 @@ class fasttext_word_embedding(Dataset):
     def __getitem__(self, index):
         comment = self.data.iloc[index, 1]
         label = self.data.iloc[index, 0]
-        vector = self.model.get_word_vector(comment)
-        return vector, label, comment 
+        vector = self.model.get_sentence_vector(comment)
+        return vector, label, comment
 
 
 

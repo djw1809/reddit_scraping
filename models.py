@@ -160,3 +160,101 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
     np.savetxt(main_folder_path/training_run_folder_path/'loss_data', loss_data, delimiter = ',')
     np.savetxt(main_folder_path/training_run_folder_path/'accuracy_data', accuracy_data, delimiter =',')
     np.savetxt(main_folder_path/training_run_folder_path/'val_accuracy_data', val_accuracy_data, delimiter = ',')
+
+
+def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epochs, batch_size, plot, main_folder, folder, filename):
+
+    training_dataset = pre.fasttext_word_embedding(model_path, train_data)
+    test_dataset = pre.fasttext_word_embedding(model_path, test_data)
+
+    main_folder_path = Path(main_folder)
+    training_run_folder_path = Path(folder)
+    final_path = Path(main_folder_path/training_run_folder_path/filename)
+
+
+    model = linear_model(model.get_dimension(), 2)
+
+    optimizer = optim.Adam(model.parameters(), lr = 1e-2)
+
+    training_loader = DataLoader(training_dataset, shuffle = True, num_workers = 1, batch_size = batch_size)
+    test_loader = DataLoader(test_dataset, shuffle = True, num_workers = 1, batch_size = batch_size)
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    loss = CrossEntropyLoss_weight()
+
+    if plot:
+        loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
+        accuracy_data = np.zeros((epochs))
+        val_accuracy_data = np.zeros((epochs))
+        confusion_matrix_ = np.zeros((2,2))
+    else:
+        pass
+
+    for epoch in range(epochs):
+
+        model.train()
+
+        running_loss = 0
+        running_corrects = 0
+        running_val_corrects = 0
+
+        for inputs, labels  in training_loader:
+            #inputs = inputs.to(device)
+            #labels = labels.to(device)
+            inputs = inputs.float()
+            labels = labels.long()
+            optimizer.zero_grad()
+
+            #forward
+            outputs = model(inputs)
+            loss_value = loss(outputs, labels)
+            _, preds = torch.max(outputs.data, 1)
+
+            #backwards
+            loss_value.backward()
+            optimizer.step()
+
+            running_loss += loss_value.item()
+            running_corrects += torch.sum(preds == labels.data).item()
+
+        epoch_loss = running_loss / len(training_dataset)
+        epoch_corrects = running_corrects / len(training_dataset)
+
+        model.eval()
+
+        for inputs, labels  in test_loader:
+            #inputs = inputs.to(device)
+            #labels = labels.to(device)
+            inputs = inputs.float()
+            labels = labels.long()
+            outputs = model(inputs)
+            _, preds = torch.max(outputs.data, 1)
+            running_val_corrects += torch.sum(preds == labels.data).item()
+           # confusion_matrix_ += confusion_matrix(labels, preds, labels = None)
+
+        epoch_val_accuracy = running_val_corrects/len(test_dataset)
+
+        if plot:
+            loss_data[epoch] = epoch_loss
+            accuracy_data[epoch] = epoch_corrects
+            val_accuracy_data[epoch] = epoch_val_accuracy
+
+        print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
+
+    if plot:
+        plt.clf()
+        plt.xlabel('epochs')
+        plt.plot(range(epochs), loss_data, 'bo')
+        plt.plot(range(epochs), accuracy_data, 'ro')
+        plt.plot(range(epochs), val_accuracy_data, 'go')
+
+        plt.savefig(main_folder+ '/' +folder+'/'+'plots.png')
+        plt.clf()
+        #plot_confusion_matrix(confusion_matrix_, ['label1', 'label2'], normalize = False)
+        #plt.savefig(filename+'_confusion_matrix.png')
+
+    torch.save(model.state_dict(), main_folder_path/training_run_folder_path/'model')
+    np.savetxt(main_folder_path/training_run_folder_path/'loss_data', loss_data, delimiter = ',')
+    np.savetxt(main_folder_path/training_run_folder_path/'accuracy_data', accuracy_data, delimiter =',')
+    np.savetxt(main_folder_path/training_run_folder_path/'val_accuracy_data', val_accuracy_data, delimiter = ',')

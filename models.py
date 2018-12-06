@@ -172,7 +172,7 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
     final_path = Path(main_folder_path/training_run_folder_path/filename)
 
 
-    model = linear_model(model.get_dimension(), 2)
+    model = linear_model(training_dataset.model.get_dimension(), 2)
 
     optimizer = optim.Adam(model.parameters(), lr = 1e-2)
 

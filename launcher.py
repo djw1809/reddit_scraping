@@ -2,7 +2,7 @@ import pandas as pd
 import models as model
 from pathlib import Path
 
-fasttext = 1 
+fasttext = 0 
 
 train = pd.read_csv('small_hillary_donald_train_11092018', sep ='\t')
 test = pd.read_csv('small_hillary_donald_test_11092018', sep = '\t')
@@ -32,4 +32,4 @@ if fasttext == 0:
     model.train_binary_text_classifier(train, test, 20, 2, True,'results', 'test1' ,'test1')
 
 if fasttext == 1:
-    model.train_binary_text_classifier_fasttext(train, test, 'fastText_models/small.bin', 5, 2, True, 'results', 'test_fasttext', 'test_fasttext')
+    model.train_binary_text_classifier_fasttext(train, test, '../fastTextmodels/small_hillary_donald_corpus.bin', 30, 2, True, 'results', 'test_fasttext', 'test_fasttext')

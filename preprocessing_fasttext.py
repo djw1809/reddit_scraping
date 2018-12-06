@@ -204,7 +204,7 @@ class comment_dataset_with_encoding(Dataset):
         comment = self.data.loc[index, 'comment']
         label = self.data.loc[index, 'label'].astype('int')
         vector = torch.tensor(create_comment_vector(comment, self.encoding, self.nlp)[0])
-        return vector, label, comment
+        return vector, label#, comment
 
     def inverse_lookup(self, comment_vector):
         comment_vector = np.asarray(comment_vector)
@@ -220,7 +220,7 @@ class comment_dataset_with_encoding(Dataset):
 
 
 
-        return vector, label
+        
 
 ###### fasttext skipgram embedding ##########
 
@@ -237,7 +237,7 @@ class fasttext_word_embedding(Dataset):
         comment = self.data.iloc[index, 1]
         label = self.data.iloc[index, 0]
         vector = self.model.get_sentence_vector(comment)
-        return vector, label, comment
+        return vector, label#, comment
 
 
 

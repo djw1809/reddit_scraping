@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 import torch
 import torch.nn as nn
 import torchvision
-import preprocessing_fasttext as pre
+import datasets as pre
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import torch.optim as optim
@@ -60,7 +60,7 @@ class CrossEntropyLoss_weight(nn.Module): #Defines cross entropy loss with weigh
 
 #######################training_calls##################################
 
-def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot, main_folder, folder, filename):
+def train_binary_text_classifier(train_data, test_data, epochs, num_workers, batch_size, learning_rate, weight = None):
 
     corpus = train_data.append(test_data)
     corpus.index = range(len(corpus))
@@ -69,29 +69,25 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
     training_dataset = pre.comment_dataset_with_encoding(train_data, encoding)
     test_dataset = pre.comment_dataset_with_encoding(test_data, encoding)
 
-    main_folder_path = Path(main_folder)
-    training_run_folder_path = Path(folder)
-    final_path = Path(main_folder_path/training_run_folder_path/filename)
+
 
 
     model = linear_model(encoding.dimension(), 2)
 
-    optimizer = optim.Adam(model.parameters(), lr = 1e-2)
+    optimizer = optim.Adam(model.parameters(), lr = learning_rate)
 
-    training_loader = DataLoader(training_dataset, shuffle = True, num_workers = 1, batch_size = batch_size)
-    test_loader = DataLoader(test_dataset, shuffle = True, num_workers = 1, batch_size = batch_size)
+    training_loader = DataLoader(training_dataset, shuffle = True, num_workers = num_workers, batch_size = batch_size)
+    test_loader = DataLoader(test_dataset, shuffle = True, num_workers = num_workers, batch_size = batch_size)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    loss = CrossEntropyLoss_weight()
+    loss = CrossEntropyLoss_weight(weight)
 
-    if plot:
-        loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
-        accuracy_data = np.zeros((epochs))
-        val_accuracy_data = np.zeros((epochs))
-        confusion_matrix_ = np.zeros((2,2))
-    else:
-        pass
+    loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
+    accuracy_data = np.zeros((epochs))
+    val_accuracy_data = np.zeros((epochs))
+    confusion_matrix_ = np.zeros((2,2))
+
 
     for epoch in range(epochs):
 
@@ -137,59 +133,40 @@ def train_binary_text_classifier(train_data, test_data, epochs, batch_size, plot
 
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 
-        if plot:
-            loss_data[epoch] = epoch_loss
-            accuracy_data[epoch] = epoch_corrects
-            val_accuracy_data[epoch] = epoch_val_accuracy
+
+        loss_data[epoch] = epoch_loss
+        accuracy_data[epoch] = epoch_corrects
+        val_accuracy_data[epoch] = epoch_val_accuracy
 
         print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
 
-    if plot:
-        plt.clf()
-        plt.xlabel('epochs')
-        plt.plot(range(epochs), loss_data, 'bo')
-        plt.plot(range(epochs), accuracy_data, 'ro')
-        plt.plot(range(epochs), val_accuracy_data, 'go')
-
-        plt.savefig(main_folder+ '/' +folder+'/'+'plots.png')
-        plt.clf()
-        #plot_confusion_matrix(confusion_matrix_, ['label1', 'label2'], normalize = False)
-        #plt.savefig(filename+'_confusion_matrix.png')
-
-    torch.save(model.state_dict(), main_folder_path/training_run_folder_path/'model')
-    np.savetxt(main_folder_path/training_run_folder_path/'loss_data', loss_data, delimiter = ',')
-    np.savetxt(main_folder_path/training_run_folder_path/'accuracy_data', accuracy_data, delimiter =',')
-    np.savetxt(main_folder_path/training_run_folder_path/'val_accuracy_data', val_accuracy_data, delimiter = ',')
+        return model, loss_data, accuracy_data, val_accuracy_data
 
 
-def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epochs, batch_size, plot, main_folder, folder, filename):
+
+
+def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epochs, num_workers, batch_size, learning_rate, weight = None):
 
     training_dataset = pre.fasttext_word_embedding(model_path, train_data)
     test_dataset = pre.fasttext_word_embedding(model_path, test_data)
 
-    main_folder_path = Path(main_folder)
-    training_run_folder_path = Path(folder)
-    final_path = Path(main_folder_path/training_run_folder_path/filename)
-
-
     model = linear_model(training_dataset.model.get_dimension(), 2)
 
-    optimizer = optim.Adam(model.parameters(), lr = 1e-2)
+    optimizer = optim.Adam(model.parameters(), lr = learning_rate)
 
-    training_loader = DataLoader(training_dataset, shuffle = True, num_workers = 1, batch_size = batch_size)
-    test_loader = DataLoader(test_dataset, shuffle = True, num_workers = 1, batch_size = batch_size)
+    training_loader = DataLoader(training_dataset, shuffle = True, num_workers = num_workers, batch_size = batch_size)
+    test_loader = DataLoader(test_dataset, shuffle = True, num_workers = num_workers, batch_size = batch_size)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    loss = CrossEntropyLoss_weight()
+    loss = CrossEntropyLoss_weight(weight)
 
-    if plot:
-        loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
-        accuracy_data = np.zeros((epochs))
-        val_accuracy_data = np.zeros((epochs))
-        confusion_matrix_ = np.zeros((2,2))
-    else:
-        pass
+    loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
+    accuracy_data = np.zeros((epochs))
+    val_accuracy_data = np.zeros((epochs))
+    confusion_matrix_ = np.zeros((2,2))
+
+
 
     for epoch in range(epochs):
 
@@ -235,26 +212,11 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
 
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 
-        if plot:
-            loss_data[epoch] = epoch_loss
-            accuracy_data[epoch] = epoch_corrects
-            val_accuracy_data[epoch] = epoch_val_accuracy
+
+        loss_data[epoch] = epoch_loss
+        accuracy_data[epoch] = epoch_corrects
+        val_accuracy_data[epoch] = epoch_val_accuracy
 
         print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
 
-    if plot:
-        plt.clf()
-        plt.xlabel('epochs')
-        plt.plot(range(epochs), loss_data, 'bo')
-        plt.plot(range(epochs), accuracy_data, 'ro')
-        plt.plot(range(epochs), val_accuracy_data, 'go')
-
-        plt.savefig(main_folder+ '/' +folder+'/'+'plots.png')
-        plt.clf()
-        #plot_confusion_matrix(confusion_matrix_, ['label1', 'label2'], normalize = False)
-        #plt.savefig(filename+'_confusion_matrix.png')
-
-    torch.save(model.state_dict(), main_folder_path/training_run_folder_path/'model')
-    np.savetxt(main_folder_path/training_run_folder_path/'loss_data', loss_data, delimiter = ',')
-    np.savetxt(main_folder_path/training_run_folder_path/'accuracy_data', accuracy_data, delimiter =',')
-    np.savetxt(main_folder_path/training_run_folder_path/'val_accuracy_data', val_accuracy_data, delimiter = ',')
+        return model, loss_data, accuracy_data, val_accuracy_data

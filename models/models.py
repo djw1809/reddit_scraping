@@ -140,7 +140,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
 
         print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
 
-        return model, loss_data, accuracy_data, val_accuracy_data
+    return model, loss_data, accuracy_data, val_accuracy_data
 
 
 
@@ -219,4 +219,4 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
 
         print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
 
-        return model, loss_data, accuracy_data, val_accuracy_data
+    return model, loss_data, accuracy_data, val_accuracy_data

@@ -3,6 +3,7 @@ import numpy as np
 import re
 import spacy
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.model_selection import GroupShuffleSplit
 from torch.utils.data import Dataset, DataLoader
 import torch
 import fastText.FastText as fast
@@ -14,6 +15,21 @@ import fastText.FastText as fast
 
 
 ###########DATA CLEANING/PREPROCESSING ##########################
+def random_train_test_split(big_label_1, big_label_0, num_samples, train_proportion):
+    '''given two datasets where each dataset contains samples with the same label creates random train/test splits
+        for each dataset where test_big_label_i + train_big_label_i = num_samples and full_train = train_big_label_1 + train_big_label_0 '''
+
+        label1_set = big_label1.sample(num_samples)
+        label0_set = big_label2.sample(num_samples)
+
+        gss = GroupShuffleSplit(n_splits = 1, train_size = .8)
+
+        id01, id02 = next(gss.split(label0_set, groups = label0.index))
+        id11, id12 = next(gss.split(label1_set, groups = label1.index))
+
+        label0_train, label0_test = label0_set.iloc[id01], label0_set.iloc[id02]
+        label1_train, label1_test = label1_set.iloc[id11], label1_set.iloc[id12] 
+
 
 def clean_comments(dataset):
     '''dataset(pandas dataframe) - data to clean'''

@@ -158,7 +158,10 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
     test_loader = DataLoader(test_dataset, shuffle = True, num_workers = num_workers, batch_size = batch_size)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+    
+    if torch.cuda.is_available():
+        model.cuda()
+        
     loss = CrossEntropyLoss_weight(weight)
 
     loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
@@ -177,8 +180,8 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
         running_val_corrects = 0
 
         for inputs, labels  in training_loader:
-            #inputs = inputs.to(device)
-            #labels = labels.to(device)
+            inputs = inputs.to(device)
+            labels = labels.to(device)
             inputs = inputs.float()
             labels = labels.long()
             optimizer.zero_grad()
@@ -201,8 +204,8 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
         model.eval()
 
         for inputs, labels  in test_loader:
-            #inputs = inputs.to(device)
-            #labels = labels.to(device)
+            inputs = inputs.to(device)
+            labels = labels.to(device)
             inputs = inputs.float()
             labels = labels.long()
             outputs = model(inputs)

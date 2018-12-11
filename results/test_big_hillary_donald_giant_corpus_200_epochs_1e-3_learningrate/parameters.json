@@ -1,0 +1,1 @@
+{"epochs": 200, "learning_rate": 0.001, "weight": null, "batch size": 2, "num_workers": 1, "model_storage_path": "../../saved_models/classification_models", "results_folder_name": "../results", "filenames": "test_big_hillary_donald_giant_corpus_200_epochs_1e-3_learningrate", "word_embedding_path": "../../saved_models/word_embeddings/giant_corpus_cleanest.bin"}

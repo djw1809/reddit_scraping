@@ -176,7 +176,7 @@ class fasttext_word_embedding(Dataset):
     def __getitem__(self, index):
         comment = self.data.loc[index, 'comment']
         label = self.data.loc[index, 'label']
-        vector = self.model.get_sentence_vector(comment)
+        vector = torch.tensor(self.model.get_sentence_vector(comment))
         return vector, label#, comment
 
 

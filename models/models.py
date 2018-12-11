@@ -15,12 +15,13 @@ import torch.nn.functional as F
 import sklearn
 from sklearn.metrics import confusion_matrix
 from pathlib import Path
+import itertools
 
 def plot_confusion_matrix(cmat, classes, normalize = False):
 
     if normalize:
         cmat = cmat.astype('float')/ cmat.sum(axis = 1)[:, np.newaxis]
-
+    cmat = cmat.astype('float')
     plt.imshow(cmat, interpolation = 'nearest', cmap = plt.cm.Blues)
     plt.colorbar()
     tick_marks = np.arange(len(classes))
@@ -81,6 +82,11 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    if torch.cuda.is_available():
+        model.cuda()
+        if weight != None:
+            weight = weight.to(device)
+
     loss = CrossEntropyLoss_weight(weight)
 
     loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
@@ -98,8 +104,8 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
         running_val_corrects = 0
 
         for inputs, labels  in training_loader:
-            #inputs = inputs.to(device)
-            #labels = labels.to(device)
+            inputs = inputs.to(device)
+            labels = labels.to(device)
             inputs = inputs.float()
             labels = labels.long()
             optimizer.zero_grad()
@@ -122,14 +128,14 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
         model.eval()
 
         for inputs, labels  in test_loader:
-            #inputs = inputs.to(device)
-            #labels = labels.to(device)
+            inputs = inputs.to(device)
+            labels = labels.to(device)
             inputs = inputs.float()
             labels = labels.long()
             outputs = model(inputs)
             _, preds = torch.max(outputs.data, 1)
             running_val_corrects += torch.sum(preds == labels.data).item()
-           # confusion_matrix_ += confusion_matrix(labels, preds, labels = None)
+            confusion_matrix_ += confusion_matrix(labels, preds, labels =range(2)) 
 
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 
@@ -140,7 +146,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
 
         print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
 
-    return model, loss_data, accuracy_data, val_accuracy_data
+    return model, loss_data, accuracy_data, val_accuracy_data, confusion_matrix_
 
 
 
@@ -159,8 +165,12 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
+    
     if torch.cuda.is_available():
         model.cuda()
+        if weight != None:
+            weight = weight.to(device)
+        
         
     loss = CrossEntropyLoss_weight(weight)
 
@@ -211,7 +221,7 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
             outputs = model(inputs)
             _, preds = torch.max(outputs.data, 1)
             running_val_corrects += torch.sum(preds == labels.data).item()
-           # confusion_matrix_ += confusion_matrix(labels, preds, labels = None)
+            confusion_matrix_ += confusion_matrix(labels, preds, labels = range(2))
 
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 
@@ -222,4 +232,4 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
 
         print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
 
-    return model, loss_data, accuracy_data, val_accuracy_data
+    return model, loss_data, accuracy_data, val_accuracy_data, confusion_matrix_

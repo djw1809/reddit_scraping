@@ -92,12 +92,17 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
     loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
     accuracy_data = np.zeros((epochs))
     val_accuracy_data = np.zeros((epochs))
-    confusion_matrix_ = np.zeros((2,2))
+
+    confusion_matricies_test = {}
+    confusion_matricies_train = {}
 
 
     for epoch in range(epochs):
 
         model.train()
+
+        confusion_matrix_train_epoch = np.zeros((2,2))
+        confusion_matrix_test_epoch = np.zeros((2,2))
 
         running_loss = 0
         running_corrects = 0
@@ -121,6 +126,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
 
             running_loss += loss_value.item()
             running_corrects += torch.sum(preds == labels.data).item()
+            confusion_matrix_train_epoch += confusion_matrix(labels, preds, labels =range(2))
 
         epoch_loss = running_loss / len(training_dataset)
         epoch_corrects = running_corrects / len(training_dataset)
@@ -135,7 +141,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
             outputs = model(inputs)
             _, preds = torch.max(outputs.data, 1)
             running_val_corrects += torch.sum(preds == labels.data).item()
-            confusion_matrix_ += confusion_matrix(labels, preds, labels =range(2)) 
+            confusion_matrix_test_epoch += confusion_matrix(labels, preds, labels =range(2))
 
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 
@@ -143,10 +149,12 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
         loss_data[epoch] = epoch_loss
         accuracy_data[epoch] = epoch_corrects
         val_accuracy_data[epoch] = epoch_val_accuracy
+        confusion_matricies_test[epoch] = confusion_matrix_test_epoch
+        confusion_matricies_train[epoch] = confusion_matrix_train_epoch
 
         print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
 
-    return model, loss_data, accuracy_data, val_accuracy_data, confusion_matrix_
+    return model, loss_data, accuracy_data, val_accuracy_data, confusion_matricies_train, confusion_matricies_test
 
 
 
@@ -164,25 +172,27 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
     test_loader = DataLoader(test_dataset, shuffle = True, num_workers = num_workers, batch_size = batch_size)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
-    
+
+
     if torch.cuda.is_available():
         model.cuda()
         if weight != None:
             weight = weight.to(device)
-        
-        
+
+
     loss = CrossEntropyLoss_weight(weight)
 
     loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
     accuracy_data = np.zeros((epochs))
     val_accuracy_data = np.zeros((epochs))
-    confusion_matrix_ = np.zeros((2,2))
 
+    confusion_matricies_test = {}
+    confusion_matricies_train = {}
 
 
     for epoch in range(epochs):
-
+        confusion_matrix_test_epoch = np.zeros((2,2))
+        confusion_matrix_train_epoch = np.zeros((2,2))
         model.train()
 
         running_loss = 0
@@ -208,6 +218,8 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
             running_loss += loss_value.item()
             running_corrects += torch.sum(preds == labels.data).item()
 
+            confusion_matrix_train_epoch += confusion_matrix(labels, preds, labels = range(2))
+
         epoch_loss = running_loss / len(training_dataset)
         epoch_corrects = running_corrects / len(training_dataset)
 
@@ -221,15 +233,16 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
             outputs = model(inputs)
             _, preds = torch.max(outputs.data, 1)
             running_val_corrects += torch.sum(preds == labels.data).item()
-            confusion_matrix_ += confusion_matrix(labels, preds, labels = range(2))
+            confusion_matrix_test_epoch += confusion_matrix(labels, preds, labels = range(2))
 
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 
-
+        confusion_matricies_test[epoch] = confusion_matrix_test_epoch
+        confusion_matricies_train[epoch] = confusion_matrix_train_epoch
         loss_data[epoch] = epoch_loss
         accuracy_data[epoch] = epoch_corrects
         val_accuracy_data[epoch] = epoch_val_accuracy
 
         print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
 
-    return model, loss_data, accuracy_data, val_accuracy_data, confusion_matrix_
+    return model, loss_data, accuracy_data, val_accuracy_data, confusion_matricies_train, confusion_matricies_test

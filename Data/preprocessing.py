@@ -19,16 +19,22 @@ def random_train_test_split(big_label_1, big_label_0, num_samples, train_proport
     '''given two datasets where each dataset contains samples with the same label creates random train/test splits
         for each dataset where test_big_label_i + train_big_label_i = num_samples and full_train = train_big_label_1 + train_big_label_0 '''
 
-        label1_set = big_label1.sample(num_samples)
-        label0_set = big_label2.sample(num_samples)
+    label1_set = big_label1.sample(num_samples)
+    label0_set = big_label2.sample(num_samples)
 
-        gss = GroupShuffleSplit(n_splits = 1, train_size = .8)
+    gss = GroupShuffleSplit(n_splits = 1, train_size = .8)
 
-        id01, id02 = next(gss.split(label0_set, groups = label0.index))
-        id11, id12 = next(gss.split(label1_set, groups = label1.index))
+    id01, id02 = next(gss.split(label0_set, groups = label0_set.index))
+    id11, id12 = next(gss.split(label1_set, groups = label1_set.index))
 
-        label0_train, label0_test = label0_set.iloc[id01], label0_set.iloc[id02]
-        label1_train, label1_test = label1_set.iloc[id11], label1_set.iloc[id12] 
+    label0_train, label0_test = label0_set.iloc[id01], label0_set.iloc[id02]
+    label1_train, label1_test = label1_set.iloc[id11], label1_set.iloc[id12] 
+    
+    train = label0_train.append(label1_train)
+    test = label0_test.append(label0_test)
+
+
+    return train, test
 
 
 def clean_comments(dataset):

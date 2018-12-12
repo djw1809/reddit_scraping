@@ -13,8 +13,8 @@ from models import plot_confusion_matrix
 model_choice =2 
 
 ##input data
-train = pd.read_csv('../Data/test_datasets/small_hillary_donald_train_11092018', sep = '\t')#'../Data/test_datasets/big_hillary_donald_train_not_screened_120718'
-test = pd.read_csv('../Data/test_datasets/small_hillary_donald_test_11092018', sep = '\t')#'../Data/test_datasets/big_hillary_donald_test_not_screened_120718'
+train = pd.read_csv('../Data/test_datasets/small_hillary_donald_train_shuffled_12122018', sep = '\t')#'../Data/test_datasets/big_hillary_donald_train_not_screened_120718'
+test = pd.read_csv('../Data/test_datasets/small_hillary_donald_test_shuffled_12122018', sep = '\t')#'../Data/test_datasets/big_hillary_donald_test_not_screened_120718'
 
 for i in train.index:
     if train.loc[i, 'label'] == -1:
@@ -38,7 +38,7 @@ parameter_dict['batch size'] = 2
 parameter_dict['num_workers'] = 1
 parameter_dict['model_storage_path'] = '../../saved_models/classification_models'
 parameter_dict['results_folder_name'] ='../results'
-parameter_dict['filenames'] = 'small_hillary_donald_giant_corpus_121118'
+parameter_dict['filenames'] = 'small_hillary_donald_giant_corpus_shuffled_121218'
 
 
 #save locations

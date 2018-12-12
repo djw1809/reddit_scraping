@@ -75,7 +75,13 @@ np.savetxt(main_folder_path/training_run_folder_path/'val_accuracy_data', val_ac
 with open(final_results_path/Path('parameters.json'), 'w') as jsonFile:
     json.dump(parameter_dict, jsonFile)
 
+pickle_file_1 = open(main_folder_path/training_run_folder_path/'confusion_matricies_test.pickle', 'wb')
+pickle.dump(confusion_matricies_test, pickle_file_1)
+pickle_file_1.close()
 
+pickle_file_2 = open(main_folder_path/training_run_folder_path/'confusion_matricies_train.pickle', 'wb')
+pickle.dump(confusion_matricies_train, pickle_file_2)
+pickle_file_2.close()
 
 
 
@@ -94,5 +100,5 @@ plt.legend(handles = [blue_patch, red_patch, green_patch])
 
 plt.savefig(parameter_dict['results_folder_name']+ '/' +parameter_dict['filenames'] + '/'+'plots.png')
 plt.clf()
-plot_confusion_matrix(confusion_matrix_, ['trump', 'hillary'], normalize = False)
+plot_confusion_matrix(confusion_matricies_test[parameter_dict['epochs']], ['trump', 'hillary'], normalize = False)
 plt.savefig(parameter_dict['results_folder_name'] + '/' + parameter_dict['filenames'] + '/' + 'confusion_matrix.png')

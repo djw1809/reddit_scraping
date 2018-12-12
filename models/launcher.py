@@ -100,5 +100,11 @@ plt.legend(handles = [blue_patch, red_patch, green_patch])
 
 plt.savefig(parameter_dict['results_folder_name']+ '/' +parameter_dict['filenames'] + '/'+'plots.png')
 plt.clf()
+
 plot_confusion_matrix(confusion_matricies_test[parameter_dict['epochs']], ['trump', 'hillary'], normalize = False)
-plt.savefig(parameter_dict['results_folder_name'] + '/' + parameter_dict['filenames'] + '/' + 'confusion_matrix.png')
+plt.savefig(parameter_dict['results_folder_name'] + '/' + parameter_dict['filenames'] + '/' + 'confusion_matrix_test.png')
+plt.clf()
+
+plot_confusion_matrix(confusion_matricies_train[parameter_dict['epochs']], ['trump', 'hillary'], normalize = False)
+plt.savefig(parameter_dict['results_folder_name'] + '/' + parameter_dict['filenames'] + '/' + 'confusion_matrix_train.png')
+plt.clf()

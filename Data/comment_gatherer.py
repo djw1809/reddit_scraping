@@ -3,8 +3,8 @@ import os
 import csv
 import pandas as pd
 import numpy as np
-
-
+from psaw import PushshiftAPI
+import datetime as dt
 #[bot1]
 username= 'djw0001'
 password= 'Abcd354112'
@@ -141,3 +141,33 @@ def comment_screener(dataset):
 
     new_dataset.index = range(len(new_dataset))
     return new_dataset
+
+def pushshift_scrape(start_day, end_day, start_month, end_month, start_year, end_year, subreddit, limit):
+    reddit = praw.Reddit(client_id=client_id8, client_secret=client_secret8,
+                        password=password8, user_agent='pushshift_comment_scraper:<v 1.0>(by djw009)', username=username8)
+
+    api = PushshiftAPI(reddit)
+
+    comment_dataframe = pd.DataFrame(columns = ['comment body', 'comment author', 'comment id', 'subreddit', 'parent_id'])
+    start = int(dt.datetime(start_year, start_month, start_day).timestamp())
+    end = int(dt.datetime(end_year, end_month, end_day).timestamp())
+
+    comments = list(api.search_comments(after = start, before = end, subreddit = subreddit, limit = limit))
+
+    for comment in enumerate(comments):
+        comment_dataframe.loc[comment[0],'comment body'] = comment[1].body
+        comment_dataframe.loc[comment[0], 'comment author'] = comment[1].author.name
+        comment_dataframe.loc[comment[0], 'comment id'] = comment[1].id
+        comment_dataframe.loc[comment[0], 'subreddit'] = comment[1].subreddit.display_name
+        comment_dataframe.loc[comment[0], 'parent_id'] = comment[1].parent_id
+
+    return comment_dataframe
+
+def training_dataset_builder(subreddit_list)
+
+def create_reddit_instance(client_id=client_id8, client_secret=client_secret8,
+                    password=password8, user_agent='pushshift_comment_scraper:<v 1.0>(by djw009)', username=username8):
+
+    reddit = praw.Reddit(client_id = client_id, client_secret = client_secret, password = password, user_agent = user_agent, username = username)
+
+    return reddit

@@ -7,7 +7,10 @@ from sklearn.model_selection import GroupShuffleSplit
 from torch.utils.data import Dataset, DataLoader
 import torch
 import fastText.FastText as fast
+import sys
 
+sys.path.insert(0, '../models')
+import models
 
 class FastTextNN:
 
@@ -35,17 +38,34 @@ class FastTextNN:
 
         norms = np.sqrt((query**2).sum() * (vectors**2).sum(axis=1))
         cossims = cossims/norms
-        result_i = np.argpartition(-cossims, range(n+1))[1:n+1]     ##flip order of the sort of cossims have the indices of the n+1 largest entries be in order and first in the output, all smaller indices are behind these in output and are out of order 
+        result_i = np.argpartition(-cossims, range(n+1))[1:n+1]     ##flip order of the sort of cossims have the indices of the n+1 largest entries be in order and first in the output, all smaller indices are behind these in output and are out of order
         return list(zip(result_i, cossims[result_i]))
 
-    def nearest_words(self, vector = None, word = None, n=10, word_freq=None):
+    def nearest_words(self, vector = 0, word = None, n=10, word_freq=None):
 
         if word != None:
             result = self.find_nearest_neighbor(self.ft_model.get_word_vector(word), self.ft_matrix, n=n)
-        if vector != None:
+        else vector != None:
             result = self.find_nearest_neighbor(vector, self.ft_matrix, n=n)
 
         if word_freq:
             return [(self.ft_words[r[0]], r[1]) for r in result if self.word_frequencies[self.ft_words[r[0]]] >= word_freq]
         else:
             return [(self.ft_words[r[0]], r[1]) for r in result]
+
+def test_feature_vectors_of_a_linear_model(model_path, word_embedding_path):
+     classification_model_path = '../../saved_models/classification_model_path/' + model_path
+     vector_embedding_path = '../../saved_modles/word_embeddings/' + word_embedding_path
+     word_embedding = fast.load_model(vector_embedding_path)
+     linear_model = models.linear_model(100,2)
+     linear_model.load_state_dict(torch.load(classification_model_path))
+
+     nn = FastTextNN(word_embedding)
+
+     feature_vector_1 = linear_model.fc.weight[0]
+     feature_vector_2 = linear_model.fc.weight[1]
+
+     output1 = nn.nearest_words(vector = feature_vector_1)
+     output2 = nn.nearest_words(vector = feature_vector_2)
+
+     return nn, output1, output2

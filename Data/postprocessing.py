@@ -53,13 +53,18 @@ class FastTextNN:
         else:
             return [(self.ft_words[r[0]], r[1]) for r in result]
 
-def get_feature_vectors_from_linear_model(model, outputsize):
+def get_feature_vectors_from_linear_model(model_path):
+
+    path = '../../saved_models/classification_models/' + model_path
+    model = torch.load(path)
+    number_of_feature_vectors = int(model['fc.weight'].shape[0])
+    linear_model = models.linear_model(int(model['fc.weight'].shape[1]), int(model['fc.weight'].shape[0]))
 
     vector_dict = {}
     tensor_dict = {}
     for i in range(outputsize):
-        tensor_dict[i] = model.fc[i]
-        vector_dict[i] = np.asarray(model.fc[i].detach()) ##detach removes vector from computational graph so that it can be cast into a numpy array
+        tensor_dict[i] = linear_model.fc.weight[i]
+        vector_dict[i] = np.asarray(linear_model.fc.weight[i].detach()) ##detach removes vector from computational graph so that it can be cast into a numpy array
 
     return vector_dict, tensor_dict
 
@@ -67,15 +72,14 @@ def test_feature_vectors_of_a_linear_model(model_path, word_embedding_path):
      classification_model_path = '../../saved_models/classification_models/' + model_path
      vector_embedding_path = '../../saved_models/word_embeddings/' + word_embedding_path
      word_embedding = fast.load_model(vector_embedding_path)
-     linear_model = models.linear_model(100,2)
-     linear_model.load_state_dict(torch.load(classification_model_path))
+
+     feature_vectors = get_feature_vectors_from_linear_model(classification_model_path)[0]
 
      nn = FastTextNN(word_embedding)
 
-     feature_vector_1 = linear_model.fc.weight[0]
-     feature_vector_2 = linear_model.fc.weight[1]
+     outputs = {}
+     for i in range(len(feature_vectors)):
+         output[i] = nn.nearest_words(vector = feature_vectors[i])
 
-     output1 = nn.nearest_words(vector = feature_vector_1)
-     output2 = nn.nearest_words(vector = feature_vector_2)
 
-     return nn, output1, output2
+     return nn, outputs

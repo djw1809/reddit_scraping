@@ -64,7 +64,7 @@ def get_feature_vectors_from_linear_model(model, outputsize):
     return vector_dict, tensor_dict
 
 def test_feature_vectors_of_a_linear_model(model_path, word_embedding_path):
-     classification_model_path = '../../saved_models/classification_model_path/' + model_path
+     classification_model_path = '../../saved_models/classification_models/' + model_path
      vector_embedding_path = '../../saved_models/word_embeddings/' + word_embedding_path
      word_embedding = fast.load_model(vector_embedding_path)
      linear_model = models.linear_model(100,2)

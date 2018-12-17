@@ -45,13 +45,23 @@ class FastTextNN:
 
         if word != None:
             result = self.find_nearest_neighbor(self.ft_model.get_word_vector(word), self.ft_matrix, n=n)
-        else vector != None:
+        else:
             result = self.find_nearest_neighbor(vector, self.ft_matrix, n=n)
 
         if word_freq:
             return [(self.ft_words[r[0]], r[1]) for r in result if self.word_frequencies[self.ft_words[r[0]]] >= word_freq]
         else:
             return [(self.ft_words[r[0]], r[1]) for r in result]
+
+def get_feature_vectors_from_linear_model(model, outputsize):
+
+    vector_dict = {}
+    tensor_dict = {}
+    for i in range(outputsize):
+        tensor_dict[i] = model.fc[i]
+        vector_dict[i] = np.asarray(model.fc[i].detach()) ##detach removes vector from computational graph so that it can be cast into a numpy array
+
+    return vector_dict, tensor_dict
 
 def test_feature_vectors_of_a_linear_model(model_path, word_embedding_path):
      classification_model_path = '../../saved_models/classification_model_path/' + model_path

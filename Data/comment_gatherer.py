@@ -153,15 +153,19 @@ def pushshift_scrape(start_day, end_day, start_month, end_month, start_year, end
     end = int(dt.datetime(end_year, end_month, end_day).timestamp())
 
     comments = list(api.search_comments(after = start, before = end, subreddit = subreddit, limit = limit))
-
+    bad_comments = []
     for comment in enumerate(comments):
-        comment_dataframe.loc[comment[0],'comment body'] = comment[1].body
-        comment_dataframe.loc[comment[0], 'comment author'] = comment[1].author.name
-        comment_dataframe.loc[comment[0], 'comment id'] = comment[1].id
-        comment_dataframe.loc[comment[0], 'subreddit'] = comment[1].subreddit.display_name
-        comment_dataframe.loc[comment[0], 'parent_id'] = comment[1].parent_id
+        try:
+            comment_dataframe.loc[comment[0],'comment body'] = comment[1].body
+            comment_dataframe.loc[comment[0], 'comment author'] = comment[1].author.name
+            comment_dataframe.loc[comment[0], 'comment id'] = comment[1].id
+            comment_dataframe.loc[comment[0], 'subreddit'] = comment[1].subreddit.display_name
+            comment_dataframe.loc[comment[0], 'parent_id'] = comment[1].parent_id
+        else:
+            bad_comments.append(comment)
 
-    return comment_dataframe
+
+    return comment_dataframe, bad_comments
 
 
 
@@ -183,12 +187,16 @@ def pushshift_scrape_mostrecent(subreddit, limit):
     end = int(dt.datetime(end_year, end_month, end_day).timestamp())
 
     comments = list(api.search_comments(subreddit = subreddit, limit = limit))
+    bad_comments = []
 
     for comment in enumerate(comments):
-        comment_dataframe.loc[comment[0],'comment body'] = comment[1].body
-        comment_dataframe.loc[comment[0], 'comment author'] = comment[1].author.name
-        comment_dataframe.loc[comment[0], 'comment id'] = comment[1].id
-        comment_dataframe.loc[comment[0], 'subreddit'] = comment[1].subreddit.display_name
-        comment_dataframe.loc[comment[0], 'parent_id'] = comment[1].parent_id
+        try:
+            comment_dataframe.loc[comment[0],'comment body'] = comment[1].body
+            comment_dataframe.loc[comment[0], 'comment author'] = comment[1].author.name
+            comment_dataframe.loc[comment[0], 'comment id'] = comment[1].id
+            comment_dataframe.loc[comment[0], 'subreddit'] = comment[1].subreddit.display_name
+            comment_dataframe.loc[comment[0], 'parent_id'] = comment[1].parent_id
+        else:
+            bad_comments.append(comment)
 
-    return comment_dataframe
+    return comment_dataframe, bad_comments 

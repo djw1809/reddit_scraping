@@ -163,7 +163,7 @@ def pushshift_scrape(start_day, end_day, start_month, end_month, start_year, end
 
     return comment_dataframe
 
-def training_dataset_builder(subreddit_list)
+
 
 def create_reddit_instance(client_id=client_id8, client_secret=client_secret8,
                     password=password8, user_agent='pushshift_comment_scraper:<v 1.0>(by djw009)', username=username8):

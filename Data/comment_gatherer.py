@@ -171,3 +171,24 @@ def create_reddit_instance(client_id=client_id8, client_secret=client_secret8,
     reddit = praw.Reddit(client_id = client_id, client_secret = client_secret, password = password, user_agent = user_agent, username = username)
 
     return reddit
+
+def pushshift_scrape_mostrecent(subreddit, limit):
+    reddit = praw.Reddit(client_id=client_id8, client_secret=client_secret8,
+                        password=password8, user_agent='pushshift_comment_scraper:<v 1.0>(by djw009)', username=username8)
+
+    api = PushshiftAPI(reddit)
+
+    comment_dataframe = pd.DataFrame(columns = ['comment body', 'comment author', 'comment id', 'subreddit', 'parent_id'])
+    start = int(dt.datetime(start_year, start_month, start_day).timestamp())
+    end = int(dt.datetime(end_year, end_month, end_day).timestamp())
+
+    comments = list(api.search_comments(subreddit = subreddit, limit = limit))
+
+    for comment in enumerate(comments):
+        comment_dataframe.loc[comment[0],'comment body'] = comment[1].body
+        comment_dataframe.loc[comment[0], 'comment author'] = comment[1].author.name
+        comment_dataframe.loc[comment[0], 'comment id'] = comment[1].id
+        comment_dataframe.loc[comment[0], 'subreddit'] = comment[1].subreddit.display_name
+        comment_dataframe.loc[comment[0], 'parent_id'] = comment[1].parent_id
+
+    return comment_dataframe

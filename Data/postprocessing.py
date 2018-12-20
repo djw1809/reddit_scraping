@@ -59,10 +59,10 @@ def get_feature_vectors_from_linear_model(model_path):
     model = torch.load(path)
     number_of_feature_vectors = int(model['fc.weight'].shape[0])
     linear_model = models.linear_model(int(model['fc.weight'].shape[1]), int(model['fc.weight'].shape[0]))
-
+    linear_model.load_state_dict(model)
     vector_dict = {}
     tensor_dict = {}
-    for i in range(outputsize):
+    for i in range(number_of_feature_vectors):
         tensor_dict[i] = linear_model.fc.weight[i]
         vector_dict[i] = np.asarray(linear_model.fc.weight[i].detach()) ##detach removes vector from computational graph so that it can be cast into a numpy array
 
@@ -79,7 +79,7 @@ def test_feature_vectors_of_a_linear_model(model_path, word_embedding_path):
 
      outputs = {}
      for i in range(len(feature_vectors)):
-         output[i] = nn.nearest_words(vector = feature_vectors[i])
+         outputs[i] = nn.nearest_words(vector = feature_vectors[i])
 
 
      return nn, outputs

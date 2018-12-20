@@ -45,7 +45,7 @@ class linear_model(nn.Module):
 
     def forward(self, x):
         h = self.fc(x)
-        return
+        return h 
 
 class one_layer_relu(nn.Module):
     def __init__(self, size_11, size_12, size_21, size_22):
@@ -57,7 +57,7 @@ class one_layer_relu(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
 
-        return x     
+        return x
 
 
 ####################### loss functions ##############################

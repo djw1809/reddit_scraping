@@ -40,7 +40,7 @@ def random_train_test_split(big_label_1, big_label_0, num_samples, train_proport
 def clean_comments(dataset):
     '''dataset(pandas dataframe) - data to clean'''
 
-    dataset.dropna(how = 'any') 
+    dataset  = dataset.dropna(how = 'any') 
 
     for i in dataset.index:
         comment = dataset.loc[i, 'comment body']

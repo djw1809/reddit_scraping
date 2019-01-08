@@ -112,14 +112,27 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
 
     for epoch in range(epochs):
 
-        model.train()
-
+        
         confusion_matrix_train_epoch = np.zeros((2,2))
         confusion_matrix_test_epoch = np.zeros((2,2))
 
         running_loss = 0
         running_corrects = 0
         running_val_corrects = 0
+
+        model.eval() 
+
+        for inputs, labels  in test_loader:
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            inputs = inputs.float()
+            labels = labels.long()
+            outputs = model(inputs)
+            _, preds = torch.max(outputs.data, 1)
+            running_val_corrects += torch.sum(preds == labels.data).item()
+            confusion_matrix_test_epoch += confusion_matrix(labels, preds, labels =range(2))
+
+        model.train()
 
         for inputs, labels  in training_loader:
             inputs = inputs.to(device)
@@ -144,18 +157,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
         epoch_loss = running_loss / len(training_dataset)
         epoch_corrects = running_corrects / len(training_dataset)
 
-        model.eval()
-
-        for inputs, labels  in test_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-            inputs = inputs.float()
-            labels = labels.long()
-            outputs = model(inputs)
-            _, preds = torch.max(outputs.data, 1)
-            running_val_corrects += torch.sum(preds == labels.data).item()
-            confusion_matrix_test_epoch += confusion_matrix(labels, preds, labels =range(2))
-
+       
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 
 
@@ -206,11 +208,24 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
     for epoch in range(epochs):
         confusion_matrix_test_epoch = np.zeros((2,2))
         confusion_matrix_train_epoch = np.zeros((2,2))
-        model.train()
-
+        
         running_loss = 0
         running_corrects = 0
         running_val_corrects = 0
+
+        model.eval()
+
+        for inputs, labels  in test_loader:
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            inputs = inputs.float()
+            labels = labels.long()
+            outputs = model(inputs)
+            _, preds = torch.max(outputs.data, 1)
+            running_val_corrects += torch.sum(preds == labels.data).item()
+            confusion_matrix_test_epoch += confusion_matrix(labels, preds, labels = range(2))
+
+        model.train()
 
         for inputs, labels  in training_loader:
             inputs = inputs.to(device)
@@ -236,17 +251,7 @@ def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epo
         epoch_loss = running_loss / len(training_dataset)
         epoch_corrects = running_corrects / len(training_dataset)
 
-        model.eval()
-
-        for inputs, labels  in test_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-            inputs = inputs.float()
-            labels = labels.long()
-            outputs = model(inputs)
-            _, preds = torch.max(outputs.data, 1)
-            running_val_corrects += torch.sum(preds == labels.data).item()
-            confusion_matrix_test_epoch += confusion_matrix(labels, preds, labels = range(2))
+        
 
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 

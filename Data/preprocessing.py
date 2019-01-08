@@ -28,8 +28,8 @@ def random_train_test_split(big_label_1, big_label_0, num_samples, train_proport
     id11, id12 = next(gss.split(label1_set, groups = label1_set.index))
 
     label0_train, label0_test = label0_set.iloc[id01], label0_set.iloc[id02]
-    label1_train, label1_test = label1_set.iloc[id11], label1_set.iloc[id12] 
-    
+    label1_train, label1_test = label1_set.iloc[id11], label1_set.iloc[id12]
+
     train = label0_train.append(label1_train)
     test = label0_test.append(label0_test)
 
@@ -39,6 +39,9 @@ def random_train_test_split(big_label_1, big_label_0, num_samples, train_proport
 
 def clean_comments(dataset):
     '''dataset(pandas dataframe) - data to clean'''
+
+    dataset.dropna(how = 'any') 
+
     for i in dataset.index:
         comment = dataset.loc[i, 'comment body']
 

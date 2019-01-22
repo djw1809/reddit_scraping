@@ -17,6 +17,8 @@ from sklearn.metrics import confusion_matrix
 from pathlib import Path
 import itertools
 
+
+######### utils #######################
 def plot_confusion_matrix(cmat, classes, normalize = False):
 
     if normalize:
@@ -45,7 +47,7 @@ class linear_model(nn.Module):
 
     def forward(self, x):
         h = self.fc(x)
-        return h 
+        return h
 
 class one_layer_relu(nn.Module):
     def __init__(self, size_11, size_12, size_21, size_22):
@@ -74,24 +76,35 @@ class CrossEntropyLoss_weight(nn.Module): #Defines cross entropy loss with weigh
 
 #######################training_calls##################################
 
-def train_binary_text_classifier(train_data, test_data, epochs, num_workers, batch_size, learning_rate, weight = None):
+def train_binary_text_classifier(train_data, test_data, epochs, num_workers, batch_size, learning_rate, embedding_choice = 1, model_path = None, weight = None):
 
-    corpus = train_data.append(test_data)
-    corpus.index = range(len(corpus))
-    encoding = pre.corpus_to_one_hot(corpus)
+#### choose which type of word embedding to use, 0 - one-hot, 1 - fastText, make sure to include a path to the embedding if using fastText ####
+    if embedding_choice == 1:
 
-    training_dataset = pre.comment_dataset_with_encoding(train_data, encoding)
-    test_dataset = pre.comment_dataset_with_encoding(test_data, encoding)
+        corpus = train_data.append(test_data)
+        corpus.index = range(len(corpus))
+        encoding = pre.corpus_to_one_hot(corpus)
 
+        training_dataset = pre.comment_dataset_with_encoding(train_data, encoding)
+        test_dataset = pre.comment_dataset_with_encoding(test_data, encoding)
 
+        model = linear_model(encoding.dimension(), 2)
 
+    if embedding_choice == 2:
 
-    model = linear_model(encoding.dimension(), 2)
+        training_dataset = pre.fasttext_word_embedding(model_path, train_data)
+        test_dataset = pre.fasttext_word_embedding(model_path, test_data)
 
+        model = linear_model(training_dataset.model.get_dimension(), 2)
+
+#### initialize DataLoaders, loss and optimizer ####
     optimizer = optim.Adam(model.parameters(), lr = learning_rate)
+    loss = CrossEntropyLoss_weight(weight)
 
     training_loader = DataLoader(training_dataset, shuffle = True, num_workers = num_workers, batch_size = batch_size)
     test_loader = DataLoader(test_dataset, shuffle = True, num_workers = num_workers, batch_size = batch_size)
+
+#### configure model to use cuda if it is available ####
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -100,7 +113,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
         if weight != None:
             weight = weight.to(device)
 
-    loss = CrossEntropyLoss_weight(weight)
+#### initialize containers to store model outputs in ####
 
     loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
     accuracy_data = np.zeros((epochs))
@@ -109,10 +122,11 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
     confusion_matricies_test = {}
     confusion_matricies_train = {}
 
+##### MAIN TRAINING LOOP ######
 
     for epoch in range(epochs):
 
-        
+#### initialize epoch data #####
         confusion_matrix_train_epoch = np.zeros((2,2))
         confusion_matrix_test_epoch = np.zeros((2,2))
 
@@ -120,7 +134,8 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
         running_corrects = 0
         running_val_corrects = 0
 
-        model.eval() 
+###### EVALUATION STEP ########
+        model.eval()
 
         for inputs, labels  in test_loader:
             inputs = inputs.to(device)
@@ -132,6 +147,7 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
             running_val_corrects += torch.sum(preds == labels.data).item()
             confusion_matrix_test_epoch += confusion_matrix(labels, preds, labels =range(2))
 
+##### TRAINING STEP ########
         model.train()
 
         for inputs, labels  in training_loader:
@@ -154,112 +170,17 @@ def train_binary_text_classifier(train_data, test_data, epochs, num_workers, bat
             running_corrects += torch.sum(preds == labels.data).item()
             confusion_matrix_train_epoch += confusion_matrix(labels, preds, labels =range(2))
 
+##### calculate  epoch data ####
         epoch_loss = running_loss / len(training_dataset)
         epoch_corrects = running_corrects / len(training_dataset)
-
-       
         epoch_val_accuracy = running_val_corrects/len(test_dataset)
 
-
+###### record epoch data ###########
         loss_data[epoch] = epoch_loss
         accuracy_data[epoch] = epoch_corrects
         val_accuracy_data[epoch] = epoch_val_accuracy
         confusion_matricies_test[epoch] = confusion_matrix_test_epoch
         confusion_matricies_train[epoch] = confusion_matrix_train_epoch
-
-        print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
-
-    return model, loss_data, accuracy_data, val_accuracy_data, confusion_matricies_train, confusion_matricies_test
-
-
-
-
-def train_binary_text_classifier_fasttext(train_data, test_data, model_path, epochs, num_workers, batch_size, learning_rate, weight = None):
-
-    training_dataset = pre.fasttext_word_embedding(model_path, train_data)
-    test_dataset = pre.fasttext_word_embedding(model_path, test_data)
-
-    model = linear_model(training_dataset.model.get_dimension(), 2)
-
-    optimizer = optim.Adam(model.parameters(), lr = learning_rate)
-
-    training_loader = DataLoader(training_dataset, shuffle = True, num_workers = num_workers, batch_size = batch_size)
-    test_loader = DataLoader(test_dataset, shuffle = True, num_workers = num_workers, batch_size = batch_size)
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-
-    if torch.cuda.is_available():
-        model.cuda()
-        if weight != None:
-            weight = weight.to(device)
-
-
-    loss = CrossEntropyLoss_weight(weight)
-
-    loss_data = np.zeros((epochs)) #empty arrays to store data for plotting in
-    accuracy_data = np.zeros((epochs))
-    val_accuracy_data = np.zeros((epochs))
-
-    confusion_matricies_test = {}
-    confusion_matricies_train = {}
-
-
-    for epoch in range(epochs):
-        confusion_matrix_test_epoch = np.zeros((2,2))
-        confusion_matrix_train_epoch = np.zeros((2,2))
-        
-        running_loss = 0
-        running_corrects = 0
-        running_val_corrects = 0
-
-        model.eval()
-
-        for inputs, labels  in test_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-            inputs = inputs.float()
-            labels = labels.long()
-            outputs = model(inputs)
-            _, preds = torch.max(outputs.data, 1)
-            running_val_corrects += torch.sum(preds == labels.data).item()
-            confusion_matrix_test_epoch += confusion_matrix(labels, preds, labels = range(2))
-
-        model.train()
-
-        for inputs, labels  in training_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-            inputs = inputs.float()
-            labels = labels.long()
-            optimizer.zero_grad()
-
-            #forward
-            outputs = model(inputs)
-            loss_value = loss(outputs, labels)
-            _, preds = torch.max(outputs.data, 1)
-
-            #backwards
-            loss_value.backward()
-            optimizer.step()
-
-            running_loss += loss_value.item()
-            running_corrects += torch.sum(preds == labels.data).item()
-
-            confusion_matrix_train_epoch += confusion_matrix(labels, preds, labels = range(2))
-
-        epoch_loss = running_loss / len(training_dataset)
-        epoch_corrects = running_corrects / len(training_dataset)
-
-        
-
-        epoch_val_accuracy = running_val_corrects/len(test_dataset)
-
-        confusion_matricies_test[epoch] = confusion_matrix_test_epoch
-        confusion_matricies_train[epoch] = confusion_matrix_train_epoch
-        loss_data[epoch] = epoch_loss
-        accuracy_data[epoch] = epoch_corrects
-        val_accuracy_data[epoch] = epoch_val_accuracy
 
         print(' Loss: {:.4f} Accuracy: {:.4f} Val_Accuracy : {:.4f}'.format(epoch_loss, epoch_corrects, epoch_val_accuracy))
 
